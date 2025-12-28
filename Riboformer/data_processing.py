@@ -208,10 +208,24 @@ def main():
                 'z_index': 'zc.txt',
                 'y_pred': 'ypred.txt',
                 }
-    parpath = os.path.dirname(os.getcwd())
-    datapath = parpath + '/datasets/' + args.data_dir + '/'
+    #parpath = os.path.dirname(os.getcwd())
+    #datapath = parpath + '/datasets/' + args.data_dir + '/'
+    # Get the directory where THIS script (data_processing.py) lives
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Go UP one level ('..') to find the datasets folder
+    # Logic: Riboformer-1/Riboformer/data_processing.py -> Riboformer-1/datasets/
+    datapath = os.path.join(script_dir, '..', 'datasets', args.data_dir)
+    
+    # Normalize the path (resolves the '..' so Windows is happy)
+    datapath = os.path.normpath(datapath)
+    
+    print(f"DEBUG: Looking for data at: {datapath}")
+    # ------------------------
+    #for key in filepath.keys():
+    #    filepath[key] = datapath + filepath[key]
     for key in filepath.keys():
-        filepath[key] = datapath + filepath[key]
+        filepath[key] = os.path.join(datapath, filepath[key])
     
     all_files = os.listdir(datapath)
     fasta_file = [f for f in all_files if f.endswith('.fasta')]
@@ -234,7 +248,7 @@ def main():
     print("---------------------------------------------")
     print("Loading genome sequences.")
     seq_dict = {}
-    for record in SeqIO.parse(datapath + fasta_file[0], "fasta"):
+    for record in SeqIO.parse(os.path.join(datapath, fasta_file[0]), "fasta"):
         seq_dict[record.id] = record.seq
         print(record.id + " len is " + str(len(record.seq)))
 
@@ -247,7 +261,7 @@ def main():
     for key in seq_dict.keys():
         if key != 'Mito':
             limit_info = dict(gff_id=[key], gff_type=["CDS"])
-            in_handle = open(datapath + gff_file[0])
+            in_handle = open(os.path.join(datapath, gff_file[0]))
             gff_data = []
             for rec in GFF.parse(in_handle, limit_info=limit_info):
                 for j in range(len(rec.features)):
